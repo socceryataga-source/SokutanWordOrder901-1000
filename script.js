@@ -68,7 +68,12 @@
     const q = quiz[current];
     checked = false;
     answerTokens = [];
-    const words = tokenize(q.sentence).map((text, i) => ({ uid: `${q.id}-${i}`, text, order: i }));
+    const rawWords = tokenize(q.sentence);
+    const words = rawWords.map((text, i) => ({
+      uid: `${q.id}-${i}`,
+      text: displayToken(text, i),
+      order: i
+    }));
     poolTokens = [...words];
     shuffle(poolTokens);
     if (poolTokens.length > 2 && poolTokens.every((t, i) => t.order === i)) [poolTokens[0], poolTokens[1]] = [poolTokens[1], poolTokens[0]];
@@ -88,7 +93,42 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function tokenize(sentence) { return sentence.trim().split(/\s+/).filter(Boolean); }
+  function tokenize(sentence) {
+    // Treat . ? ! as independent cards so punctuation itself does not reveal the last word.
+    // Commas stay attached because the requested change is limited to sentence punctuation.
+    return sentence
+      .trim()
+      .replace(/([.?!])/g, " $1 " )
+      .split(/\s+/)
+      .filter(Boolean);
+  }
+
+  function isPunctuation(text) {
+    return /^[.?!]$/.test(text);
+  }
+
+  function displayToken(text, index) {
+    let shown = text;
+    // In the pool, hide the sentence-initial capitalization clue.
+    // The pronoun I is always capitalized in English, so never turn it into i.
+    if (index === 0 && shown !== "I") {
+      shown = shown.replace(/[A-Z]/, ch => ch.toLowerCase());
+    }
+    return shown;
+  }
+
+  function tokenTextForArea(token, area) {
+    let shown = token.text;
+    if (shown === "I") return "I";
+    if (area !== "answer" || isPunctuation(shown)) return shown;
+
+    // Capitalize the first word currently placed in the answer zone.
+    const firstWord = answerTokens.find(t => !isPunctuation(t.text));
+    if (firstWord && firstWord.uid === token.uid) {
+      shown = shown.replace(/[a-z]/, ch => ch.toUpperCase());
+    }
+    return shown;
+  }
 
   function renderTokens() {
     wordPool.innerHTML = "";
@@ -103,9 +143,10 @@
 
   function makeToken(token, area) {
     const b = document.createElement("button");
-    b.type = "button"; b.className = "token"; b.textContent = token.text;
+    const shownText = tokenTextForArea(token, area);
+    b.type = "button"; b.className = `token${isPunctuation(token.text) ? " punctuation-token" : ""}`; b.textContent = shownText;
     b.dataset.uid = token.uid;
-    b.setAttribute("aria-label", area === "pool" ? `${token.text} を解答欄へ` : `${token.text} を単語プールへ戻す`);
+    b.setAttribute("aria-label", area === "pool" ? `${shownText} を解答欄へ` : `${shownText} を単語プールへ戻す`);
     b.addEventListener("click", () => area === "pool" ? moveToAnswer(token.uid) : returnToPool(token.uid));
     return b;
   }
@@ -138,8 +179,9 @@
     if (checked || answerTokens.length === 0) return;
     checked = true;
     const q = quiz[current];
-    const user = answerTokens.map(t => t.text).join(" ");
-    const correct = user === q.sentence;
+    // Grade by token order, not by display capitalization/punctuation.
+    const correct = answerTokens.length === tokenize(q.sentence).length &&
+      answerTokens.every((token, index) => token.order === index);
     if (correct) score++;
     scoreText.textContent = String(score);
     feedback.className = `feedback ${correct ? "correct" : "wrong"}`;

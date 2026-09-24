@@ -33,3 +33,11 @@ footer{text-align:center;color:#9c98aa;font-size:.68rem;letter-spacing:.08em;pad
 @media(max-width:650px){.app-shell{padding-left:12px;padding-right:12px}.site-header{height:64px}.header-badge{display:none}.hero-card{padding:26px 22px;grid-template-columns:1fr}.mini-demo{display:none}.hero-note{font-size:.86rem}.setup-panel,.question-panel{padding:20px 16px;border-radius:20px}.range-grid{gap:6px}.input-card{padding:10px 11px}.input-card input{font-size:1.25rem}.jp-sentence{margin-bottom:22px}.token{padding:11px 12px;font-size:.96rem;min-height:42px}.answer-section{padding:12px}.answer-zone{min-height:94px}.pool-zone{gap:9px}.quiz-topline{margin-top:0}.result-panel{padding:34px 18px}}
 @media(max-width:380px){.range-grid{grid-template-columns:1fr 18px 1fr}.range-separator{text-align:center}.mode-btn{padding:12px 6px;font-size:.86rem}.token{font-size:.9rem;padding:10px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+/* Sentence punctuation is an independent, compact card in the word pool. */
+.token.punctuation-token {
+  min-width: 3rem;
+  padding-left: 0.9rem;
+  padding-right: 0.9rem;
+  font-weight: 800;
+}
